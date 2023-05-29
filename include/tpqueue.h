@@ -1,106 +1,82 @@
 // Copyright 2022 NNTU-CS
 #ifndef INCLUDE_TPQUEUE_H_
 #define INCLUDE_TPQUEUE_H_
-#include <iostream>
-#include <string>
+#include <stdexcept>
 
 template<typename T>
 class TPQueue {
- public:
-    TPQueue() : head(nullptr), tail(nullptr) { }
-    ~TPQueue();
-    void push(const T&);
-    T pop();
-    void print() const;
-
- private:
-    struct Item {
-        T value;
+  // реализация шаблона очереди с приоритетом на связанном списке
+  struct Item {
+        T data;
         Item* next;
         Item* prev;
-    };
-    Item* head;
+  };
+  Item* head;
     Item* tail;
-    TPQueue::Item* create(const T&);
-};
-template <typename T>
-TPQueue<T>::~TPQueue() {
-    while (head) {
-        pop();
+    Item* createItem(const T& data) {
+        Item* newItem = new Item;
+        newItem->data = data;
+        newItem->next = nullptr;
+        newItem->prev = nullptr;
+        return newItem;
     }
-}
 
-template <typename T>
-typename TPQueue<T>::Item* TPQueue<T>::create(const T& value) {
-    Item* temp = new Item;
-    temp->value = value;
-    temp->next = nullptr;
-    temp->prev = nullptr;
-    return temp;
-}
-
-template <typename T>
-void TPQueue<T>::push(const T& item) {
-    if (head == nullptr) {
-       head = create(item);
-       tail = head;
-    } else if (tail->value.prior >= item.prior) {
-        if (tail->value.ch == item.ch) {
-            tail->value = item;
-        } else {
-            tail->next = create(item);
-            tail->next->prev = tail;
-            tail = tail->next;
-        }
-    } else if (head == tail) {
-        tail->prev = create(item);
-        head = tail->prev;
-        head->next = tail;
-    } else {
-        Item* temp = tail;
-        while (temp != head && temp->value.prior < item.prior) {
-        temp = temp->prev;
-        }
-        if (temp->value.prior > item.prior) {
-            Item* a = new Item;
-            a->next = temp->next;
-            a->prev = temp;
-            a->value = item;
-            temp->next->prev = a;
-            temp->next = a;
-        }
-        if (temp == head && temp->value.prior < item.prior) {
-            head->prev = create(item);
-            head = head->prev;
-            head->next = temp;
-        }
-    }
-}
-
-template <typename T>
-T TPQueue<T>::pop() {
-    if (!head) {
-        throw std::string("Empty");
-    } else {
+ public:
+    TPQueue() : head(nullptr), tail(nullptr) {}
+    T pop() {
+        if (!head)
+            throw std::underflow_error("Queue is Empty!");
         Item* temp = head->next;
-        T value = head->value;
+        T data = head->data;
         delete head;
         head = temp;
-        return value;
+        return data;
     }
-}
+    void clear() {
+        while (head)
+            pop();
+    }
+    ~TPQueue() {
+        clear();
+    }
+    void push(const T& newData) {
+        if (head == nullptr) {
+            head = createItem(newData);
+            tail = head;
+        } else if (tail->data.prior >= newData.prior) {
+            if (tail->data.ch == newData.ch) {
+              tail->data = newData;
+            } else {
+                tail->next = createItem(newData);
+                tail->next->prev = tail;
+                tail = tail->next;
+            }
+        } else if (head == tail) {
+            tail->prev = createItem(newData);
+            head = tail->prev;
+            head->next = tail;
+        }
+        Item* item = tail;
+        while (item != head && item->data.prior < newData.prior) {
+          item = item->prev;
+        }
+        if (item->data.prior > newData.prior) {
+            Item* newItem = createItem(newData);
+            newItem->prev = item;
+            newItem->next = item->next;
+            item->next->prev = newItem;
+            item->next = newItem;
+        }
+        if (item == head && item->data.prior < newData.prior) {
+            head->prev = createItem(newData);
+            head = head->prev;
+            head->next = item;
+        }
+    }
+};
 
-template <typename T>
-void TPQueue<T>::print() const {
-    Item* temp = head;
-    while (temp) {
-        std::cout << temp->value << " ";
-        temp = temp->next;
-    }
-    std::cout << std::endl;
-}
 struct SYM {
   char ch;
   int prior;
 };
-#endif  // INCLUDE_TPQUEUE_H
+#endif  // INCLUDE_TPQUEUE_H_
